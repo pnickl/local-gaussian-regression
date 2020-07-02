@@ -2,8 +2,10 @@
 # implements incremental LGR
 
 import numpy as np
-from localmodel import LocalModel
+from lgr.batchLGR.localmodel import LocalModel
 
+from tqdm import tqdm
+from sklearn.metrics import explained_variance_score, mean_squared_error, r2_score
 
 
 class LGR(object):
@@ -29,7 +31,7 @@ class LGR(object):
             self.lmodels[self.M].init_lm(x, X, Yh)
             self.M = self.M + 1
         else:
-            print "maximum number of local models reached"
+            print("maximum number of local models reached")
 
         return 0
 
@@ -78,7 +80,8 @@ class LGR(object):
 
         self.add_local_model(X[0, :])
 
-        for n in range(0, n_data):
+        print("Initialize local models:")
+        for n in tqdm(range(0, n_data)):
             xn = X[n, :]
             w = np.zeros(self.M)
             for m in range(0, self.M):
@@ -95,11 +98,18 @@ class LGR(object):
         Yp = self.predict(X)
         sse = ((Yp - Y) ** 2).sum()
         mse = sse / n_data
-        print "initial nmse: " + str(mse/np.var(Y))
+        print("initial nmse: " + str(mse/np.var(Y)))
         nmse = np.zeros(n_iter)
 
+        train_mse = mean_squared_error(Y, Yp)
+        train_smse = 1. - r2_score(Y, Yp, multioutput='variance_weighted')
+        train_evar = explained_variance_score(Y, Yp, multioutput='variance_weighted')
+
+        print('TRAIN - MSE:', train_mse, 'SMSE:', train_smse, 'EVAR:', train_evar)
+
         # learn parameters
-        for i in range(0, n_iter):
+        print("Learn parameters:")
+        for i in tqdm(range(0, n_iter)):
 
             sse = 0.0
             # batch update parameters
@@ -112,13 +122,20 @@ class LGR(object):
 
             # compute current mse
             if debug and i > 0 and np.mod(i, 100) == 0:
-                print "iter: {}, nmse: {}, M: {}".format(i, nmse[i], self.M)
+                print("iter: {}, nmse: {}, M: {}".format(i, nmse[i], self.M))
 
         # models final prediction on training data
         # Yp = self.predict(X)
         # sse = sse + ((Y - Yp) ** 2).sum()
         # mse = sse / n_data
         # nmse = mse / np.var(Y)
+
+        train_mse = mean_squared_error(Y, Yp)
+        train_smse = 1. - r2_score(Y, Yp, multioutput='variance_weighted')
+        train_evar = explained_variance_score(Y, Yp, multioutput='variance_weighted')
+
+        print('TRAIN - MSE:', train_mse, 'SMSE:', train_smse, 'EVAR:', train_evar)
+
         return nmse
 
     def predict(self, x):
@@ -134,7 +151,8 @@ class LGR(object):
     def get_local_model_activations(self, X):
 
         local_models_act = np.zeros((X.shape[0], self.M))
-        for m in range(self.M):
+        print("Get local model activations:")
+        for m in tqdm(range(self.M)):
             local_models_act[:, m] = self.lmodels[m].get_activation(X)[:, 0]
 
         return local_models_act
