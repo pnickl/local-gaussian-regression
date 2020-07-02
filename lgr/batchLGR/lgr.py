@@ -80,7 +80,7 @@ class LGR(object):
 
         self.add_local_model(X[0, :])
 
-        print("Initialize local models:")
+        print("Initialize local models:\n")
         for n in tqdm(range(0, n_data)):
             xn = X[n, :]
             w = np.zeros(self.M)
@@ -105,10 +105,10 @@ class LGR(object):
         train_smse = 1. - r2_score(Y, Yp, multioutput='variance_weighted')
         train_evar = explained_variance_score(Y, Yp, multioutput='variance_weighted')
 
-        print('TRAIN - MSE:', train_mse, 'SMSE:', train_smse, 'EVAR:', train_evar)
+        print('INITIAL - TRAIN - MSE:', train_mse, 'SMSE:', train_smse, 'EVAR:', train_evar)
 
         # learn parameters
-        print("Learn parameters:")
+        print("Learn parameters:\n")
         for i in tqdm(range(0, n_iter)):
 
             sse = 0.0
@@ -134,7 +134,7 @@ class LGR(object):
         train_smse = 1. - r2_score(Y, Yp, multioutput='variance_weighted')
         train_evar = explained_variance_score(Y, Yp, multioutput='variance_weighted')
 
-        print('TRAIN - MSE:', train_mse, 'SMSE:', train_smse, 'EVAR:', train_evar)
+        print('FINAL - TRAIN - MSE:', train_mse, 'SMSE:', train_smse, 'EVAR:', train_evar)
 
         return nmse
 
@@ -151,7 +151,7 @@ class LGR(object):
     def get_local_model_activations(self, X):
 
         local_models_act = np.zeros((X.shape[0], self.M))
-        print("Get local model activations:")
+        print("Get local model activations:\n")
         for m in tqdm(range(self.M)):
             local_models_act[:, m] = self.lmodels[m].get_activation(X)[:, 0]
 
