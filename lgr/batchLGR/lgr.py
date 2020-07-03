@@ -130,12 +130,6 @@ class LGR(object):
         # mse = sse / n_data
         # nmse = mse / np.var(Y)
 
-        train_mse = mean_squared_error(Y, Yp)
-        train_smse = 1. - r2_score(Y, Yp, multioutput='variance_weighted')
-        train_evar = explained_variance_score(Y, Yp, multioutput='variance_weighted')
-
-        print('FINAL - TRAIN - MSE:', train_mse, 'SMSE:', train_smse, 'EVAR:', train_evar)
-
         return nmse
 
     def predict(self, x):
