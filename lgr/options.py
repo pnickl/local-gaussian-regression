@@ -4,13 +4,13 @@ class Options(object):
 
     def __init__(self, lmD):
         ''' setting default params '''
-        self.max_iter = 1000
+        self.max_iter = 100
         self.init_lambda = 0.3
         self.activ_thresh = 0.5
         self.init_eta = 0.0001
         self.fr = 0.999
         self.norm_out = 1.0
-        self.max_num_lm = 10000
+        self.max_num_lm = 1000
         self.alpha_a_0 = 1e-6
         self.alpha_b_0 = 1e-6
         self.betaf_a_0 = 1e-6
