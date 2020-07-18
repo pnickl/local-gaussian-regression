@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import exp
 
 from lgr.options import Options
 from lgr.batchLGR.lgr import LGR
@@ -8,9 +7,9 @@ from sklearn.metrics import explained_variance_score, mean_squared_error, r2_sco
 
 #%%
 
-N_train = 400
-N_test = 100
-D_out = 21
+N_train = 2000
+N_test = 500
+D = 21
 
 seed = 411
 np.random.seed(seed)
@@ -53,10 +52,10 @@ def load_sarcos_data(D, N_train, N_test):
 
 #%%
 
-opt = Options(D_out)
-opt.activ_thresh = 0.3
-opt.max_num_lm = 400
-opt.max_iter = 1000
+opt = Options(D)
+opt.activ_thresh = 0.03
+opt.max_num_lm = 1000
+opt.max_iter = 5000
 
 # opt.init_eta = 1
 # opt.init_lambda = 0.9
@@ -65,10 +64,10 @@ opt.print_options()
 
 #%%
 
-X_train, Y_train, X_test, Y_test = load_sarcos_data(D_out, N_train, N_test)
+X_train, Y_train, X_test, Y_test = load_sarcos_data(D, N_train, N_test)
 Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
 
-model = LGR(opt, D_out)
+model = LGR(opt, D)
 debug = False
 model.initialize_local_models(X_train)
 initial_local_models = model.get_local_model_activations(X_train)
