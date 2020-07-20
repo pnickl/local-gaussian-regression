@@ -53,12 +53,9 @@ def load_sarcos_data(D, N_train, N_test):
 #%%
 
 opt = Options(D)
-opt.activ_thresh = 0.03
+opt.activ_thresh = 0.3
 opt.max_num_lm = 1000
-opt.max_iter = 5000
-
-# opt.init_eta = 1
-# opt.init_lambda = 0.9
+opt.max_iter = 2500
 
 opt.print_options()
 
@@ -73,12 +70,13 @@ model.initialize_local_models(X_train)
 initial_local_models = model.get_local_model_activations(X_train)
 
 nmse = model.run(X_train, Y_train, opt.max_iter, debug)
-print("nmse (train): {}".format(nmse[-1]))
+print("final nmse (train): {}".format(nmse[-1]))
 
 #%%
 
 Yp = model.predict(X_test)
 final_local_models = model.get_local_model_activations(X_test)
+number_local_models = final_local_models.shape[1]
 print('Number of test data and final local models:', final_local_models.shape)
 
 #%%
@@ -88,5 +86,5 @@ test_evar = explained_variance_score(Y_test, Yp, multioutput='variance_weighted'
 
 print('FINAL - TEST - MSE:', test_mse, 'SMSE:', test_smse, 'EVAR:', test_evar)
 
-arr = np.array([test_mse, test_smse, test_evar])
+arr = np.array([test_mse, test_smse, test_evar, number_local_models])
 np.savetxt('sarcos_lgp.csv', arr, delimiter=',')
