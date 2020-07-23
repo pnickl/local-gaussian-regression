@@ -73,6 +73,7 @@ def load_cross_data(N_train):
 #%%
 
 n_sweeps = 3
+
 opt = Options(D_in)
 opt.activ_thresh = 0.9
 opt.max_num_lm = 300
@@ -80,7 +81,6 @@ opt.max_iter = 1000
 
 opt.alpha_upthresh = 7
 opt.init_lambda = 0.3
-
 
 opt.print_options()
 
@@ -106,7 +106,7 @@ for i in range(n_sweeps):
 Yp = model.predict(X_test)
 final_local_models = model.get_local_model_activations(X_train)
 number_local_models = final_local_models.shape[1]
-print('Number of test data, number of final local models:', final_local_models.shape)
+print('# test data, final # local models:', final_local_models.shape)
 
 test_mse = mean_squared_error(Y_test, Yp)
 test_smse = 1. - r2_score(Y_test, Yp, multioutput='variance_weighted')

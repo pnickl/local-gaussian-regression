@@ -7,15 +7,6 @@ from sklearn.metrics import explained_variance_score, mean_squared_error, r2_sco
 
 #%%
 
-N_train = 20000
-N_test = 4000
-D_in = 21
-
-seed = 411
-np.random.seed(seed)
-
-#%%
-
 def load_sarcos_data(D, N_train, N_test):
     import scipy as sc
     from scipy import io
@@ -50,10 +41,20 @@ def load_sarcos_data(D, N_train, N_test):
 
 #%%
 
+N_train = 2000
+N_test = 400
+D_in = 21
+
+n_seeds = 1
+n_sweeps = 1
+
 opt = Options(D_in)
 opt.activ_thresh = 0.3
-opt.max_num_lm = 2500
+opt.max_num_lm = 2000
 opt.max_iter = 1000
+
+opt.alpha_upthresh = 2
+opt.init_lambda = 0.3
 
 opt.print_options()
 
@@ -62,29 +63,65 @@ opt.print_options()
 X_train, Y_train, X_test, Y_test = load_sarcos_data(D_in, N_train, N_test)
 Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
 
-model = LGR(opt, D_in)
-debug = False
-model.initialize_local_models(X_train)
-initial_local_models = model.get_local_model_activations(X_train)
+#%%
 
-nmse = model.run(X_train, Y_train, opt.max_iter, debug)
-print("FINAL - TRAIN- MSE:': {}".format(nmse[-1]))
+test_mse, test_smse, nb_models = [], [], []
+for i in range(n_seeds):
+    print("------------------Seed Nr. " + str(i) + "-----------------------")
+    np.random.seed()
+
+    model = LGR(opt, D_in)
+    debug = False
+    model.initialize_local_models(X_train)
+    initial_local_models = model.get_local_model_activations(X_train)
+
+    #%%
+
+    for j in range(n_sweeps):
+        print("------------------Sweep Nr. "+str(j)+"-----------------------")
+
+        nmse = model.run(X_train, Y_train, opt.max_iter, debug)
+        print("FINAL - TRAIN - NSME: {}".format(nmse[-1]))
+
+        final_local_models = model.get_local_model_activations(X_train)
+        number_local_models = final_local_models.shape[1]
+        print(number_local_models)
+
+    #%%
+
+    Yp = model.predict(X_test)
+    final_local_models = model.get_local_model_activations(X_test)
+
+    _nb_models = final_local_models.shape[1]
+    _test_mse = mean_squared_error(Y_test, Yp)
+    _test_smse = 1. - r2_score(Y_test, Yp, multioutput='variance_weighted')
+    print('FINAL - TEST - MSE:', _test_mse, 'NMSE:', _test_smse, 'nb_models:', _nb_models)
+
+    test_mse.append(_test_mse)
+    test_smse.append(_test_smse)
+    nb_models.append(_nb_models)
 
 #%%
 
-Yp = model.predict(X_test)
-final_local_models = model.get_local_model_activations(X_test)
-number_local_models = final_local_models.shape[1]
-print('Number of test data and final local models:', final_local_models.shape)
+mean_mse = np.mean(test_mse)
+std_mse = np.std(test_mse)
+mean_smse = np.mean(test_smse)
+std_smse = np.std(test_smse)
 
-#%%
+mean_nb_models = np.mean(nb_models)
+std_nb_models = np.std(nb_models)
+arr = np.array([mean_mse, std_mse,
+                mean_smse, std_smse,
+                mean_nb_models, std_nb_models])
 
-test_mse = mean_squared_error(Y_test, Yp)
-test_smse = 1. - r2_score(Y_test, Yp, multioutput='variance_weighted')
-test_evar = explained_variance_score(Y_test, Yp, multioutput='variance_weighted')
-print('FINAL - TEST - MSE:', test_mse, 'NMSE:', test_smse, 'EVAR:', test_evar)
+import pandas as pd
+dt = pd.DataFrame(data=arr, index=['mse_avg', 'mse_std',
+                                   'smse_avg', 'smse_std',
+                                   'models_avg', 'models_std'])
+dt.to_csv('results/sarcos_lgp.csv',mode='a', index=True)
 
-#%%
-
-arr = np.array([test_mse, test_smse, test_evar, number_local_models])
+arr = np.array([test_mse,
+                test_smse,
+                number_local_models])
 np.savetxt('results/sarcos_lgp.csv', arr, delimiter=',')
+
