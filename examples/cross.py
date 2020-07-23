@@ -42,6 +42,8 @@ def load_cross_data(N_train):
     # 2000 uniformly distributed training inputs with zero mean gaussian noise of 0.2 standard deviation
     X1_train = np.random.uniform(-1,1,N_train) + np.random.normal(0,0.2,N_train)
     X2_train = np.random.uniform(-1,1,N_train) + np.random.normal(0,0.2,N_train)
+    # X1_train = np.linspace(-1,1,N_train) + np.random.normal(0,0.2,N_train)
+    # X2_train = np.linspace(-1,1,N_train) + np.random.normal(0,0.2,N_train)
 
     # test set is regular 40x40 grid without noise
     x1_linspace = np.linspace(-1,1,40)
@@ -57,42 +59,28 @@ def load_cross_data(N_train):
 
 #%%
 
-# plot cross function from training data
-x1_plot = np.arange(-1, 1, 0.01)
-x2_plot = np.arange(-1, 1, 0.01)
-X1_plot, X2_plot = np.meshgrid(x1_plot, x2_plot)
-_,y_plot = cross_2d(X1_plot, X2_plot, True)
-
-fig = plt.figure()
-ax = plt.axes(projection='3d')
-ax.contour3D(X1_plot, X2_plot, y_plot, 100)
-plt.show()
+# # plot cross function from training data
+# x1_plot = np.arange(-1, 1, 0.01)
+# x2_plot = np.arange(-1, 1, 0.01)
+# X1_plot, X2_plot = np.meshgrid(x1_plot, x2_plot)
+# _,y_plot = cross_2d(X1_plot, X2_plot, True)
+#
+# fig = plt.figure()
+# ax = plt.axes(projection='3d')
+# ax.contour3D(X1_plot, X2_plot, y_plot, 100)
+# plt.show()
 
 #%%
 
+n_sweeps = 3
 opt = Options(D_in)
 opt.activ_thresh = 0.9
 opt.max_num_lm = 300
-opt.max_iter = 3000
+opt.max_iter = 1000
 
-# opt.max_iter = 100
-# opt.init_lambda = 0.3
-# opt.activ_thresh = 0.5
-opt.init_eta = 0.0001
-opt.fr = 0.999
-opt.norm_out = 1.0
-# opt.max_num_lm = 1000
-opt.alpha_a_0 = 1e-6
-opt.alpha_b_0 = 1e-6
-opt.betaf_a_0 = 1e-6
-opt.betaf_b_0 = 1e-6
+opt.alpha_upthresh = 7
+opt.init_lambda = 0.3
 
-opt.betay = 1e9
-# opt.lmD = lmD
-# opt.do_bwa = True  # do lenghtscale optimization
-# opt.do_pruning = True
-
-opt.var_approx_type = 0  # 0: fully factorized, 1: w,beta one factor
 
 opt.print_options()
 
@@ -106,17 +94,19 @@ debug = False
 model.initialize_local_models(X_train)
 initial_local_models = model.get_local_model_activations(X_train)
 
-nmse = model.run(X_train, Y_train, opt.max_iter, debug)
-print("FINAL - TRAIN - NSME: {}".format(nmse[-1]))
+for i in range(n_sweeps):
+    print("i------------------i--------------------i")
+    nmse = model.run(X_train, Y_train, opt.max_iter, debug)
+    print("FINAL - TRAIN - NSME: {}".format(nmse[-1]))
 
-#%%
+    final_local_models = model.get_local_model_activations(X_train)
+    number_local_models = final_local_models.shape[1]
+    print(number_local_models)
 
 Yp = model.predict(X_test)
-final_local_models = model.get_local_model_activations(X_test)
+final_local_models = model.get_local_model_activations(X_train)
 number_local_models = final_local_models.shape[1]
-print('Number of test data and final local models:', final_local_models.shape)
-
-#%%
+print('Number of test data, number of final local models:', final_local_models.shape)
 
 test_mse = mean_squared_error(Y_test, Yp)
 test_smse = 1. - r2_score(Y_test, Yp, multioutput='variance_weighted')
@@ -125,7 +115,9 @@ print('FINAL - TEST - MSE:', test_mse, 'NSMSE:', test_smse, 'EVAR:', test_evar)
 
 #%%
 
-arr = np.array([test_mse, test_smse, test_evar, number_local_models])
+arr = np.array([test_mse,
+                test_smse,
+                number_local_models])
 np.savetxt('results/cross_lgp.csv', arr, delimiter=',')
 
 #%%

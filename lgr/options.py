@@ -23,9 +23,12 @@ class Options(object):
 
         self.var_approx_type = 0  # 0: fully factorized, 1: w,beta one factor
 
+        self.alpha_upthresh = 999.999
+
     def print_options(self):
         print("options: ")
         print(" norm_out: " + str(self.norm_out))
         print(" max_iter: " + str(self.max_iter))
         print(" init_lambda: " + str(self.init_lambda))
         print(" activ thresh: " + str(self.activ_thresh))
+        print(" alpha_upthresh: " + str(self.alpha_upthresh))

@@ -22,8 +22,11 @@ class LGR(object):
         self.betay = opt.betay
 
         self.lmodels = [None] * opt.max_num_lm
+        
+        self.alpha_upthresh = opt.alpha_upthresh
+
         for i in range(0, opt.max_num_lm):
-            self.lmodels[i] = LocalModel(opt, dim, self.K, self.lmD)
+            self.lmodels[i] = LocalModel(opt, dim, self.K, self.lmD, self.alpha_upthresh)
 
     def add_local_model(self, x, X=None, Yh=None):
 
@@ -80,7 +83,7 @@ class LGR(object):
 
         self.add_local_model(X[0, :])
 
-        print("Initialize local models:\n")
+        print("Initialize local models:")
         for n in tqdm(range(0, n_data)):
             xn = X[n, :]
             w = np.zeros(self.M)
@@ -108,7 +111,7 @@ class LGR(object):
         print('INITIAL - TRAIN - MSE:', train_mse, 'SMSE:', train_smse, 'EVAR:', train_evar)
 
         # learn parameters
-        print("Learn parameters:\n")
+        print("Learn parameters:")
         for i in tqdm(range(0, n_iter)):
 
             sse = 0.0

@@ -6,7 +6,7 @@ from scipy.linalg import cholesky, inv
 
 class LocalModel(object):
 
-    def __init__(self, opt, D, K, lmD):
+    def __init__(self, opt, D, K, lmD, alpha_upthresh):
         self.K = K
         self.lmD = lmD
         self.D = D
@@ -14,6 +14,8 @@ class LocalModel(object):
 
         self.set_initial_state()
 
+        self.alpha_upthresh = alpha_upthresh
+        
     def set_initial_state(self):
         self.center = np.array(self.lmD)
         self.lengthscale = np.ones((1, self.lmD)) * self.opt.init_lambda
@@ -193,7 +195,7 @@ class LocalModel(object):
         nActK = np.size(self.UsedK)
         alpha = self.alpha_a_N / self.alpha_b_N
 
-        alpha_upthresh = 999.999
+        alpha_upthresh = self.alpha_upthresh
         keep_idx = np.where(alpha[0] < alpha_upthresh)
 
         # check_idx = np.where(alpha[0] < 1e-10)
