@@ -7,9 +7,9 @@ from sklearn.metrics import explained_variance_score, mean_squared_error, r2_sco
 
 #%%
 
-N_train = 2000
-N_test = 500
-D = 21
+N_train = 20000
+N_test = 4000
+D_in = 21
 
 seed = 411
 np.random.seed(seed)
@@ -21,8 +21,6 @@ def load_sarcos_data(D, N_train, N_test):
     from scipy import io
 
     # load all available data
-    import os
-
     _train_data = sc.io.loadmat('../datasets/sarcos/sarcos_inv.mat')['sarcos_inv']
     _test_data = sc.io.loadmat('../datasets/sarcos/sarcos_inv_test.mat')['sarcos_inv_test']
 
@@ -30,17 +28,17 @@ def load_sarcos_data(D, N_train, N_test):
 
     # scale data
     from sklearn.decomposition import PCA
-    input_scaler = PCA(n_components=21, whiten=True)
+    input_scaler = PCA(n_components=D_in, whiten=True)
     target_scaler = PCA(n_components=1, whiten=True)
 
-    input_scaler.fit(data[:, :21])
-    target_scaler.fit(data[:, 21:22])
+    input_scaler.fit(data[:, :D_in])
+    target_scaler.fit(data[:, D_in:D_in+1])
 
-    train_data = {'input': input_scaler.transform(_train_data[:N_train, :21]),
-                  'target': target_scaler.transform(_train_data[:N_train, 21:22])}
+    train_data = {'input': input_scaler.transform(_train_data[:N_train, :D_in]),
+                  'target': target_scaler.transform(_train_data[:N_train, D_in:D_in+1])}
 
-    test_data = {'input': input_scaler.transform(_test_data[:N_test, :21]),
-                 'target': target_scaler.transform(_test_data[:N_test, 21:22])}
+    test_data = {'input': input_scaler.transform(_test_data[:N_test, :D_in]),
+                 'target': target_scaler.transform(_test_data[:N_test, D_in:D_in+1])}
 
     train_input = train_data['input']
     train_target = train_data['target']
@@ -52,25 +50,25 @@ def load_sarcos_data(D, N_train, N_test):
 
 #%%
 
-opt = Options(D)
+opt = Options(D_in)
 opt.activ_thresh = 0.3
-opt.max_num_lm = 1000
-opt.max_iter = 2500
+opt.max_num_lm = 2500
+opt.max_iter = 1000
 
 opt.print_options()
 
 #%%
 
-X_train, Y_train, X_test, Y_test = load_sarcos_data(D, N_train, N_test)
+X_train, Y_train, X_test, Y_test = load_sarcos_data(D_in, N_train, N_test)
 Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
 
-model = LGR(opt, D)
+model = LGR(opt, D_in)
 debug = False
 model.initialize_local_models(X_train)
 initial_local_models = model.get_local_model_activations(X_train)
 
 nmse = model.run(X_train, Y_train, opt.max_iter, debug)
-print("final nmse (train): {}".format(nmse[-1]))
+print("FINAL - TRAIN- MSE:': {}".format(nmse[-1]))
 
 #%%
 
@@ -80,11 +78,13 @@ number_local_models = final_local_models.shape[1]
 print('Number of test data and final local models:', final_local_models.shape)
 
 #%%
+
 test_mse = mean_squared_error(Y_test, Yp)
 test_smse = 1. - r2_score(Y_test, Yp, multioutput='variance_weighted')
 test_evar = explained_variance_score(Y_test, Yp, multioutput='variance_weighted')
+print('FINAL - TEST - MSE:', test_mse, 'NMSE:', test_smse, 'EVAR:', test_evar)
 
-print('FINAL - TEST - MSE:', test_mse, 'SMSE:', test_smse, 'EVAR:', test_evar)
+#%%
 
 arr = np.array([test_mse, test_smse, test_evar, number_local_models])
-np.savetxt('sarcos_lgp.csv', arr, delimiter=',')
+np.savetxt('results/sarcos_lgp.csv', arr, delimiter=',')

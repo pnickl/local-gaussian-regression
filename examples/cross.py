@@ -5,12 +5,13 @@ from lgr.batchLGR.lgr import LGR
 
 from sklearn.metrics import explained_variance_score, mean_squared_error, r2_score
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+
 #%%
 
 N_train = 2000
-N_test = 500
-
-D_out = 1
 D_in = 2
 
 seed = 411
@@ -18,64 +19,95 @@ np.random.seed(seed)
 
 #%%
 
-# # plot cross function
-# import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
-# x1 = np.arange(-1, 1, 0.001)
-# x2 = np.arange(-1, 1, 0.001)
-# X1, X2 = np.meshgrid(x1, x2)
-# fig = plt.figure()
-# ax = plt.axes(projection='3d')
-# ax.contour3D(X1, X2, y, 100, cmap='binary')
-
-def load_cross_data(D_out, D_in, N_train, N_test):
+def cross_2d(x1, x2, test):
+    # definition of cross function from Vijayakumar et al. Locally Weighted Projection Regression (2000), ICML
     import scipy as sc
 
-    X1 = np.random.uniform(-1,1,N_train)
-    X2 = np.random.uniform(-1,1,N_train)
+    f1 = np.exp(-10 * x1 ** 2)
+    f2 = np.exp(-50 * x2 ** 2)
+    f3 = 1.25 * np.exp(-5 * (x1 ** 2 + x2 ** 2))
+    noise = sc.stats.norm.rvs(np.zeros(len(f1)), 0.01 * np.ones(len(f1)), len(f1))
+    f_ = np.maximum(f1, f2)
+    y = np.maximum(f_, f3) + noise
 
-    X1_test = np.random.uniform(-1,1,N_test)
-    X2_test = np.random.uniform(-1,1,N_test)
+    if test == True:
+        x1 = np.reshape(x1, -1)
+        x2 = np.reshape(x2, -1)
+    X = np.vstack((x1, x2)).T
 
-    def cross_2d(x1, x2):
+    return X, y
 
-        # definition from Vijayakumar et al. Locally Weighted Projection Regression (2000), ICML
-        f1 = np.exp(-10 * x1 ** 2)
-        f2 = np.exp(-50 * x2 ** 2)
-        f3 = 1.25 * np.exp(-5 * (x1 ** 2 + x2 ** 2))
-        noise = sc.stats.norm.rvs(np.zeros(len(f1)), 0.01*np.ones(len(f1)), len(f1))
-        f_ = np.maximum(f1, f2)
-        y = np.maximum(f_, f3) + noise
-        X = np.vstack((x1, x2)).T
+def load_cross_data(N_train):
 
-        return X, y
+    # 2000 uniformly distributed training inputs with zero mean gaussian noise of 0.2 standard deviation
+    X1_train = np.random.uniform(-1,1,N_train) + np.random.normal(0,0.2,N_train)
+    X2_train = np.random.uniform(-1,1,N_train) + np.random.normal(0,0.2,N_train)
 
-    train_input, train_target = cross_2d(X1, X2)
-    test_input, test_target = cross_2d(X1_test, X2_test)
+    # test set is regular 40x40 grid without noise
+    x1_linspace = np.linspace(-1,1,40)
+    x2_linspace = np.linspace(-1,1,40)
+    X1_test, X2_test = np.meshgrid(x1_linspace, x2_linspace)
+    N_test = X1_test.shape[0] * X2_test.shape[0]
 
-    return train_input, train_target, test_input, test_target
+    # data
+    train_input, train_target = cross_2d(X1_train, X2_train, False)
+    test_input, test_target = cross_2d(X1_test, X2_test, True)
+
+    return train_input, train_target, test_input, test_target, N_test
 
 #%%
 
-opt = Options(D_out)
-opt.activ_thresh = 0.5
-opt.max_num_lm = 400
-opt.max_iter = 1000
+# plot cross function from training data
+x1_plot = np.arange(-1, 1, 0.01)
+x2_plot = np.arange(-1, 1, 0.01)
+X1_plot, X2_plot = np.meshgrid(x1_plot, x2_plot)
+_,y_plot = cross_2d(X1_plot, X2_plot, True)
+
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+ax.contour3D(X1_plot, X2_plot, y_plot, 100)
+plt.show()
+
+#%%
+
+opt = Options(D_in)
+opt.activ_thresh = 0.9
+opt.max_num_lm = 300
+opt.max_iter = 3000
+
+# opt.max_iter = 100
+# opt.init_lambda = 0.3
+# opt.activ_thresh = 0.5
+opt.init_eta = 0.0001
+opt.fr = 0.999
+opt.norm_out = 1.0
+# opt.max_num_lm = 1000
+opt.alpha_a_0 = 1e-6
+opt.alpha_b_0 = 1e-6
+opt.betaf_a_0 = 1e-6
+opt.betaf_b_0 = 1e-6
+
+opt.betay = 1e9
+# opt.lmD = lmD
+# opt.do_bwa = True  # do lenghtscale optimization
+# opt.do_pruning = True
+
+opt.var_approx_type = 0  # 0: fully factorized, 1: w,beta one factor
 
 opt.print_options()
 
 #%%
 
-X_train, Y_train, X_test, Y_test = load_cross_data(D_out, D_in, N_train, N_test)
+X_train, Y_train, X_test, Y_test, N_test = load_cross_data(N_train)
 Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
 
-model = LGR(opt, D_out)
+model = LGR(opt, D_in)
 debug = False
 model.initialize_local_models(X_train)
 initial_local_models = model.get_local_model_activations(X_train)
 
 nmse = model.run(X_train, Y_train, opt.max_iter, debug)
-print("final nmse (train): {}".format(nmse[-1]))
+print("FINAL - TRAIN - NSME: {}".format(nmse[-1]))
 
 #%%
 
@@ -85,11 +117,25 @@ number_local_models = final_local_models.shape[1]
 print('Number of test data and final local models:', final_local_models.shape)
 
 #%%
+
 test_mse = mean_squared_error(Y_test, Yp)
 test_smse = 1. - r2_score(Y_test, Yp, multioutput='variance_weighted')
 test_evar = explained_variance_score(Y_test, Yp, multioutput='variance_weighted')
+print('FINAL - TEST - MSE:', test_mse, 'NSMSE:', test_smse, 'EVAR:', test_evar)
 
-print('FINAL - TEST - MSE:', test_mse, 'SMSE:', test_smse, 'EVAR:', test_evar)
+#%%
 
 arr = np.array([test_mse, test_smse, test_evar, number_local_models])
-np.savetxt('cross_lgp.csv', arr, delimiter=',')
+np.savetxt('results/cross_lgp.csv', arr, delimiter=',')
+
+#%%
+
+# # plot learned cross function
+x1_linspace = np.arange(-1, 1, 0.05)
+x2_linspace = np.arange(-1, 1, 0.05)
+X1_test, X2_test = np.meshgrid(x1_linspace, x2_linspace)
+
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+ax.contour3D(X1_test, X2_test, Yp.reshape(X1_test.shape), 100)
+plt.show()

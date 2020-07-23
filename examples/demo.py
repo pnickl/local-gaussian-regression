@@ -7,7 +7,7 @@ from lgr.batchLGR.lgr import LGR
 #%%
 
 N = 200
-D = 1
+D_in = 1
 stds = 0.2
 seed = 411
 np.random.seed(seed)
@@ -16,7 +16,7 @@ np.random.seed(seed)
 
 # plotting doesn't work for 2D data - but learning does
 def generate_2d_data():
-    X = (np.random.rand(N, D) - 0.5)*2
+    X = (np.random.rand(N, D_in) - 0.5) * 2
     Yorig = np.vstack((exp(-X[:, 0] ** 2 * 10), exp(-X[:, 1] ** 2 * 50), 1.25 * exp(-(X[:, 0] ** 2 + X[:, 1] ** 2) * 5))).max(0)
     Y = np.reshape(Yorig, [N, 1]) + stds * np.random.randn(N, 1)
     return X, Y
@@ -35,14 +35,14 @@ def generate_1d_data_nonstationary():
 
 #%%
 
-opt = Options(D)
+opt = Options(D_in)
 opt.activ_thresh = 0.4
 opt.print_options()
 
 #%%
 
 X, Y = generate_1d_data_nonstationary()
-model = LGR(opt, D)
+model = LGR(opt, D_in)
 debug = False
 model.initialize_local_models(X)
 initial_local_models = model.get_local_model_activations(X)

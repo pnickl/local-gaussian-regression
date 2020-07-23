@@ -96,9 +96,9 @@ class LGR(object):
 
         n_data = np.size(Y)
         Yp = self.predict(X)
-        sse = ((Yp - Y) ** 2).sum()
-        mse = sse / n_data
-        print("initial nmse: " + str(mse/np.var(Y)))
+        # sse = ((Yp - Y) ** 2).sum()
+        # mse = sse / n_data
+        # print("initial nmse: " + str(mse/np.var(Y)))
         nmse = np.zeros(n_iter)
 
         train_mse = mean_squared_error(Y, Yp)
