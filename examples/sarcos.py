@@ -3,7 +3,26 @@ import numpy as np
 from lgr.options import Options
 from lgr.batchLGR.lgr import LGR
 
-from sklearn.metrics import explained_variance_score, mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score
+
+#%%
+
+N_train = 2000  # max 44484
+N_test = 400    # max 4449
+D_in = 21
+
+n_seeds = 1
+n_sweeps = 1
+
+opt = Options(D_in)
+opt.activ_thresh = 0.3
+opt.max_num_lm = 2000
+opt.max_iter = 1000
+
+opt.alpha_upthresh = 1 + 5e-10
+opt.init_lambda = 0.3
+
+opt.print_options()
 
 #%%
 
@@ -41,25 +60,6 @@ def load_sarcos_data(D, N_train, N_test):
 
 #%%
 
-N_train = 2000
-N_test = 400
-D_in = 21
-
-n_seeds = 1
-n_sweeps = 1
-
-opt = Options(D_in)
-opt.activ_thresh = 0.3
-opt.max_num_lm = 2000
-opt.max_iter = 1000
-
-opt.alpha_upthresh = 2
-opt.init_lambda = 0.3
-
-opt.print_options()
-
-#%%
-
 X_train, Y_train, X_test, Y_test = load_sarcos_data(D_in, N_train, N_test)
 Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
 
@@ -78,7 +78,7 @@ for i in range(n_seeds):
     #%%
 
     for j in range(n_sweeps):
-        print("------------------Sweep Nr. "+str(j)+"-----------------------")
+        print("------------------Sweep Nr. "+str(j)+"-----------------------\n")
 
         nmse = model.run(X_train, Y_train, opt.max_iter, debug)
         print("FINAL - TRAIN - NSME: {}".format(nmse[-1]))
@@ -120,8 +120,5 @@ dt = pd.DataFrame(data=arr, index=['mse_avg', 'mse_std',
                                    'models_avg', 'models_std'])
 dt.to_csv('results/sarcos_lgp.csv',mode='a', index=True)
 
-arr = np.array([test_mse,
-                test_smse,
-                number_local_models])
-np.savetxt('results/sarcos_lgp.csv', arr, delimiter=',')
+
 
