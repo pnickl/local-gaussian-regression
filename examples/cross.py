@@ -72,15 +72,15 @@ def load_cross_data(N_train):
 
 #%%
 
-n_sweeps = 3
+n_sweeps = 1
 
 opt = Options(D_in)
 opt.activ_thresh = 0.9
 opt.max_num_lm = 300
 opt.max_iter = 1000
+opt.init_lambda = 0.3
 
 opt.alpha_upthresh = 7
-opt.init_lambda = 0.3
 
 opt.print_options()
 

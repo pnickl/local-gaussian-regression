@@ -22,7 +22,7 @@ class LGR(object):
         self.betay = opt.betay
 
         self.lmodels = [None] * opt.max_num_lm
-        
+
         self.alpha_upthresh = opt.alpha_upthresh
 
         for i in range(0, opt.max_num_lm):
@@ -108,7 +108,7 @@ class LGR(object):
         train_smse = 1. - r2_score(Y, Yp, multioutput='variance_weighted')
         train_evar = explained_variance_score(Y, Yp, multioutput='variance_weighted')
 
-        print('INITIAL - TRAIN - MSE:', train_mse, 'SMSE:', train_smse, 'EVAR:', train_evar)
+        print('INITIAL - TRAIN - MSE:', train_mse, 'NMSE:', train_smse, 'EVAR:', train_evar)
 
         # learn parameters
         print("Learn parameters:")

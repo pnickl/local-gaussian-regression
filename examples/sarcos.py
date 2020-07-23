@@ -7,8 +7,11 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 #%%
 
-N_train = 2000  # max 44484
-N_test = 400    # max 4449
+N_train = 44484                # max 44484
+if int(N_train / 4) > 4449:    # max 4449
+    N_test = 4449
+else:
+    N_test = int(N_train / 4)
 D_in = 21
 
 n_seeds = 1
@@ -16,11 +19,14 @@ n_sweeps = 1
 
 opt = Options(D_in)
 opt.activ_thresh = 0.3
-opt.max_num_lm = 2000
-opt.max_iter = 1000
-
-opt.alpha_upthresh = 1 + 5e-10
+opt.max_num_lm = N_train
+opt.max_iter = 3000
 opt.init_lambda = 0.3
+
+# opt.alpha_a_0 = 1e+6
+# opt.alpha_b_0 = 1e+6
+# opt.alpha_upthresh = 1 + 5e-13
+opt.alpha_upthresh = 1 + 2e-10
 
 opt.print_options()
 
@@ -68,7 +74,8 @@ Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test,
 test_mse, test_smse, nb_models = [], [], []
 for i in range(n_seeds):
     print("------------------Seed Nr. " + str(i) + "-----------------------")
-    np.random.seed()
+    seed = 441
+    np.random.seed(seed)
 
     model = LGR(opt, D_in)
     debug = False
