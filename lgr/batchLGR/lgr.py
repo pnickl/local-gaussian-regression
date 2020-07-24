@@ -5,14 +5,12 @@ import numpy as np
 from lgr.batchLGR.localmodel import LocalModel
 
 from tqdm import tqdm
-from sklearn.metrics import explained_variance_score, mean_squared_error, r2_score
 
 
 class LGR(object):
     ''' (batch) Local Gaussian Regression'''
 
     def __init__(self, opt, dim):
-        #opt.print_options()
 
         self.D = dim  # dim of data
         self.K = dim + 1  # number of dim of each local model
@@ -29,12 +27,11 @@ class LGR(object):
             self.lmodels[i] = LocalModel(opt, dim, self.K, self.lmD, self.alpha_upthresh)
 
     def add_local_model(self, x, X=None, Yh=None):
-
-        if(self.M + 1 < self.opt.max_num_lm):
+        if self.M + 1 < self.opt.max_num_lm:
             self.lmodels[self.M].init_lm(x, X, Yh)
             self.M = self.M + 1
-        else:
-            print("maximum number of local models reached")
+        # else:
+        #     print("maximum number of local models reached")
 
         return 0
 
@@ -90,7 +87,7 @@ class LGR(object):
             for m in range(0, self.M):
                 lm = self.lmodels[m]
                 w[m] = lm.get_activation(xn[np.newaxis, :])
-            
+
             max_act = w.max()
             if max_act < self.opt.activ_thresh:
                 self.add_local_model(xn)
@@ -98,17 +95,7 @@ class LGR(object):
     def run(self, X, Y, n_iter, debug):
 
         n_data = np.size(Y)
-        Yp = self.predict(X)
-        # sse = ((Yp - Y) ** 2).sum()
-        # mse = sse / n_data
-        # print("initial nmse: " + str(mse/np.var(Y)))
         nmse = np.zeros(n_iter)
-
-        train_mse = mean_squared_error(Y, Yp)
-        train_smse = 1. - r2_score(Y, Yp, multioutput='variance_weighted')
-        train_evar = explained_variance_score(Y, Yp, multioutput='variance_weighted')
-
-        print('INITIAL - TRAIN - MSE:', train_mse, 'NMSE:', train_smse, 'EVAR:', train_evar)
 
         # learn parameters
         print("Learn parameters:")
@@ -127,12 +114,6 @@ class LGR(object):
             if debug and i > 0 and np.mod(i, 100) == 0:
                 print("iter: {}, nmse: {}, M: {}".format(i, nmse[i], self.M))
 
-        # models final prediction on training data
-        # Yp = self.predict(X)
-        # sse = sse + ((Y - Yp) ** 2).sum()
-        # mse = sse / n_data
-        # nmse = mse / np.var(Y)
-
         return nmse
 
     def predict(self, x):
@@ -144,7 +125,6 @@ class LGR(object):
 
         return yp
 
-
     def get_local_model_activations(self, X):
 
         local_models_act = np.zeros((X.shape[0], self.M))
@@ -153,4 +133,4 @@ class LGR(object):
             local_models_act[:, m] = self.lmodels[m].get_activation(X)[:, 0]
 
         return local_models_act
-            
+

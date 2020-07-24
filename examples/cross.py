@@ -1,15 +1,15 @@
 import numpy as np
 
+import scipy as sc
+from scipy import stats
+
 from lgr.options import Options
 from lgr.batchLGR.lgr import LGR
 
-from sklearn.metrics import explained_variance_score, mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
 
-#%%
 
 N_train = 2000
 D_in = 2
@@ -17,10 +17,10 @@ D_in = 2
 seed = 411
 np.random.seed(seed)
 
-#%%
 
 def cross_2d(x1, x2, test):
-    # definition of cross function from Vijayakumar et al. Locally Weighted Projection Regression (2000), ICML
+    # definition of cross function from Vijayakumar et al.
+    # Locally Weighted Projection Regression (2000), ICML
     import scipy as sc
 
     f1 = np.exp(-10 * x1 ** 2)
@@ -37,17 +37,16 @@ def cross_2d(x1, x2, test):
 
     return X, y
 
+
 def load_cross_data(N_train):
 
     # 2000 uniformly distributed training inputs with zero mean gaussian noise of 0.2 standard deviation
-    X1_train = np.random.uniform(-1,1,N_train) + np.random.normal(0,0.2,N_train)
-    X2_train = np.random.uniform(-1,1,N_train) + np.random.normal(0,0.2,N_train)
-    # X1_train = np.linspace(-1,1,N_train) + np.random.normal(0,0.2,N_train)
-    # X2_train = np.linspace(-1,1,N_train) + np.random.normal(0,0.2,N_train)
+    X1_train = np.random.uniform(-1, 1, N_train) + np.random.normal(0, 0.2, N_train)
+    X2_train = np.random.uniform(-1, 1, N_train) + np.random.normal(0, 0.2, N_train)
 
     # test set is regular 40x40 grid without noise
-    x1_linspace = np.linspace(-1,1,40)
-    x2_linspace = np.linspace(-1,1,40)
+    x1_linspace = np.linspace(-1, 1, 40)
+    x2_linspace = np.linspace(-1, 1, 40)
     X1_test, X2_test = np.meshgrid(x1_linspace, x2_linspace)
     N_test = X1_test.shape[0] * X2_test.shape[0]
 
@@ -57,70 +56,38 @@ def load_cross_data(N_train):
 
     return train_input, train_target, test_input, test_target, N_test
 
-#%%
-
-# # plot cross function from training data
-# x1_plot = np.arange(-1, 1, 0.01)
-# x2_plot = np.arange(-1, 1, 0.01)
-# X1_plot, X2_plot = np.meshgrid(x1_plot, x2_plot)
-# _,y_plot = cross_2d(X1_plot, X2_plot, True)
-#
-# fig = plt.figure()
-# ax = plt.axes(projection='3d')
-# ax.contour3D(X1_plot, X2_plot, y_plot, 100)
-# plt.show()
-
-#%%
-
-n_sweeps = 1
 
 opt = Options(D_in)
-opt.activ_thresh = 0.9
-opt.max_num_lm = 300
-opt.max_iter = 1000
+opt.activ_thresh = 0.5
+opt.max_num_lm = 100
+opt.max_iter = 10000
 opt.init_lambda = 0.3
-
-opt.alpha_upthresh = 7
 
 opt.print_options()
 
-#%%
 
 X_train, Y_train, X_test, Y_test, N_test = load_cross_data(N_train)
 Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
 
 model = LGR(opt, D_in)
-debug = False
+debug = True
+
 model.initialize_local_models(X_train)
 initial_local_models = model.get_local_model_activations(X_train)
 
-for i in range(n_sweeps):
-    print("i------------------i--------------------i")
-    nmse = model.run(X_train, Y_train, opt.max_iter, debug)
-    print("FINAL - TRAIN - NSME: {}".format(nmse[-1]))
+nmse = model.run(X_train, Y_train, opt.max_iter, debug)
+print("TRAIN - NSME: {}".format(nmse[-1]))
 
-    final_local_models = model.get_local_model_activations(X_train)
-    number_local_models = final_local_models.shape[1]
-    print(number_local_models)
 
 Yp = model.predict(X_test)
 final_local_models = model.get_local_model_activations(X_train)
 number_local_models = final_local_models.shape[1]
+
 print('# test data, final # local models:', final_local_models.shape)
 
 test_mse = mean_squared_error(Y_test, Yp)
 test_smse = 1. - r2_score(Y_test, Yp, multioutput='variance_weighted')
-test_evar = explained_variance_score(Y_test, Yp, multioutput='variance_weighted')
-print('FINAL - TEST - MSE:', test_mse, 'NSMSE:', test_smse, 'EVAR:', test_evar)
-
-#%%
-
-arr = np.array([test_mse,
-                test_smse,
-                number_local_models])
-np.savetxt('results/cross_lgp.csv', arr, delimiter=',')
-
-#%%
+print('TEST - MSE:', test_mse, 'NSMSE:', test_smse)
 
 # # plot learned cross function
 x1_linspace = np.arange(-1, 1, 0.05)
