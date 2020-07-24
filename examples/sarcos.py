@@ -12,6 +12,7 @@ if int(N_train / 4) > 4449:    # max 4449
     N_test = 4449
 else:
     N_test = int(N_train / 4)
+
 D_in = 21
 
 n_seeds = 1
@@ -19,8 +20,8 @@ n_sweeps = 1
 
 opt = Options(D_in)
 opt.activ_thresh = 0.3
-opt.max_num_lm = N_train
-opt.max_iter = 3000
+opt.max_num_lm = 2000
+opt.max_iter = 1000
 opt.init_lambda = 0.3
 
 # opt.alpha_a_0 = 1e+6
@@ -41,6 +42,9 @@ def load_sarcos_data(D, N_train, N_test):
     _test_data = sc.io.loadmat('../datasets/sarcos/sarcos_inv_test.mat')['sarcos_inv_test']
 
     data = np.vstack((_train_data, _test_data))
+
+    # shuffle data
+    np.random.shuffle(data)
 
     # scale data
     from sklearn.decomposition import PCA
@@ -66,16 +70,18 @@ def load_sarcos_data(D, N_train, N_test):
 
 #%%
 
-X_train, Y_train, X_test, Y_test = load_sarcos_data(D_in, N_train, N_test)
-Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
-
-#%%
-
 test_mse, test_smse, nb_models = [], [], []
 for i in range(n_seeds):
     print("------------------Seed Nr. " + str(i) + "-----------------------")
     seed = 441
     np.random.seed(seed)
+
+    # %%
+
+    X_train, Y_train, X_test, Y_test = load_sarcos_data(D_in, N_train, N_test)
+    Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
+
+    # %%
 
     model = LGR(opt, D_in)
     debug = False
