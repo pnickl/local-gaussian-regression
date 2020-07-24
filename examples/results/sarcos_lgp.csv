@@ -786,3 +786,10 @@ smse_avg,1.0106868382849454
 smse_std,0.0
 models_avg,95.0
 models_std,0.0
+,0
+mse_avg,574.6987503993562
+mse_std,0.0
+smse_avg,1.1372560173783317
+smse_std,0.0
+models_avg,99.0
+models_std,0.0

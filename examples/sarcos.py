@@ -5,7 +5,7 @@ from lgr.batchLGR.lgr import LGR
 
 from sklearn.metrics import mean_squared_error, r2_score
 
-N_train = 44484 # max 44484
+N_train = 44484   # max 44484
 
 D_in = 21
 
@@ -51,11 +51,11 @@ def load_sarcos_data(D_in, N_train):
     input_scaler.fit(data[:, :D_in])
     target_scaler.fit(data[:, D_in:D_in+1])
 
-    train_input = data[:N_train, :D_in]
-    train_target = data[:N_train, D_in:D_in+1]
-
     # train_input = input_scaler.transform(_train_data[:N_train, :D_in])
     # train_target = target_scaler.transform(_train_data[:N_train, D_in:D_in+1])
+
+    train_input = data[:N_train, :D_in]
+    train_target = data[:N_train, D_in:D_in+1]
 
     test_input = _test_data[:N_test, :D_in]
     test_target = _test_data[:N_test, D_in:D_in+1]
@@ -66,8 +66,7 @@ test_mse, test_smse, nb_models = [], [], []
 for i in range(n_seeds):
 
     print("------------------Seed Nr. " + str(i) + "-----------------------")
-    seed = 441
-    np.random.seed(seed)
+    np.random.seed()
 
     X_train, Y_train, X_test, Y_test, input_scaler, target_scaler = load_sarcos_data(D_in, N_train)
 
@@ -75,7 +74,6 @@ for i in range(n_seeds):
     debug = False
     model.initialize_local_models(X_train)
     initial_local_models = model.get_local_model_activations(X_train)
-
 
     for j in range(n_sweeps):
         print("------------------Sweep Nr. "+str(j)+"-----------------------\n")
@@ -87,9 +85,12 @@ for i in range(n_seeds):
         number_local_models = final_local_models.shape[1]
         print(number_local_models)
 
-    X_test_scaled = input_scaler.transform(X_test)
-    Yp = target_scaler.inverse_transform(model.predict(X_test_scaled))
-    final_local_models = model.get_local_model_activations(X_test_scaled)
+    # X_test_scaled = input_scaler.transform(X_test)
+    # Yp = target_scaler.inverse_transform(model.predict(X_test_scaled))
+    # final_local_models = model.get_local_model_activations(X_test_scaled)
+
+    Yp = model.predict(X_test)
+    final_local_models = model.get_local_model_activations(X_test)
 
     _nb_models = final_local_models.shape[1]
 
