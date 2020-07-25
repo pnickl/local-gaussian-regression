@@ -58,7 +58,7 @@ def load_cross_data(N_train):
 
 
 opt = Options(D_in)
-opt.activ_thresh = 0.5
+opt.activ_thresh = 0.3
 opt.max_num_lm = 100
 opt.max_iter = 10000
 opt.init_lambda = 0.3
@@ -67,7 +67,13 @@ opt.print_options()
 
 
 X_train, Y_train, X_test, Y_test, N_test = load_cross_data(N_train)
-Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
+
+from sklearn.preprocessing import StandardScaler
+input_scaler = StandardScaler()
+input_scaler.fit(np.vstack((X_train, X_test)))
+
+X_train = input_scaler.transform(X_train)
+X_test = input_scaler.transform(X_test)
 
 model = LGR(opt, D_in)
 debug = True

@@ -24,24 +24,32 @@ test_data = sc.io.loadmat('../datasets/sarcos/sarcos_inv_test.mat')['sarcos_inv_
 model = LGR(opt, 21)
 debug = True
 
-# Train
-X_train = train_data[:, :21]
-Y_trian = train_data[:, 21][:, None]
+# preprocess
+X_train = train_data[:2500, :21]
+Y_train = train_data[:2500, 21][:, None]
 
+X_test = test_data[:, :21]
+Y_test = test_data[:, 21][:, None]
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+scaler.fit(np.vstack((X_train, X_test)))
+
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+# Train
 model.initialize_local_models(X_train)
 initial_local_models = model.get_local_model_activations(X_train)
 
-nmse = model.run(X_train, Y_trian, opt.max_iter, debug)
+nmse = model.run(X_train, Y_train, opt.max_iter, debug)
 print("TRAIN - NSME: {}".format(nmse[-1]))
 
 final_local_models = model.get_local_model_activations(X_train)
 number_local_models = final_local_models.shape[1]
 
-
 # Test
-X_test = test_data[:, :21]
-Y_test = test_data[:, 21][:, None]
-
 Yp = model.predict(X_test)
 final_local_models = model.get_local_model_activations(X_test)
 _nb_models = final_local_models.shape[1]
