@@ -105,14 +105,14 @@ class LGR(object):
             # batch update parameters
             self.update(X, Y)
 
-            Yp = self.predict(X)
-            sse = sse + ((Y - Yp) ** 2).sum()
-            mse = sse / n_data
-            nmse[i] = mse / np.var(Y)
-
-            # compute current mse
-            if debug and i > 0 and np.mod(i, 100) == 0:
-                print("iter: {}, nmse: {}, M: {}".format(i, nmse[i], self.M))
+            # Yp = self.predict(X)
+            # sse = sse + ((Y - Yp) ** 2).sum()
+            # mse = sse / n_data
+            # nmse[i] = mse / np.var(Y)
+            #
+            # # compute current mse
+            # if debug and i > 0 and np.mod(i, 100) == 0:
+            #     print("iter: {}, nmse: {}, M: {}".format(i, nmse[i], self.M))
 
         return nmse
 
