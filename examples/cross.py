@@ -87,7 +87,6 @@ opt.print_options()
 #%%
 
 X_train, Y_train, X_test, Y_test, N_test = load_cross_data(N_train)
-Y_train, Y_test = np.reshape(Y_train, (N_train, 1)), np.reshape(Y_test, (N_test, 1))
 
 model = LGR(opt, D_in)
 debug = False

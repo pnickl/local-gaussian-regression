@@ -148,8 +148,7 @@ class LGR(object):
     def get_local_model_activations(self, X):
 
         local_models_act = np.zeros((X.shape[0], self.M))
-        print("Get local model activations:\n")
-        for m in tqdm(range(self.M)):
+        for m in range(self.M):
             local_models_act[:, m] = self.lmodels[m].get_activation(X)[:, 0]
 
         return local_models_act
