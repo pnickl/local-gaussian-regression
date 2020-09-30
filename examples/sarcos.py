@@ -12,8 +12,8 @@ nb_seeds = 5
 D_in = 21
 nb_outputs = 7
 
-subsample = False
-nb_subsample = 10       # if subsample true take every nb_subsample'th training point
+subsample = True
+nb_subsample = 100       # if subsample true take every nb_subsample'th training point
 
 # set options
 opt = Options(D_in)
